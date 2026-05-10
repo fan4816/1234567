@@ -9,7 +9,7 @@
 - 生成风险等级、提示和可复制摘要
 - 页面内置“分享页面”和“复制页面链接”按钮
 - 适配手机浏览器显示
-- 自带 GitHub Pages 自动部署工作流
+- 支持 GitHub Pages 直接从分支发布
 
 ## 怎样分享给别人看
 
@@ -18,10 +18,11 @@
 ### 方式一：GitHub Pages
 
 1. 把当前目录推送到你的 GitHub 仓库。
-2. 仓库开启 GitHub Pages。
-3. 代码推送后，`.github/workflows/deploy-pages.yml` 会自动部署。
-4. 部署完成后，你会得到一个公开网址。
-5. 把这个网址发给别人，对方手机点开就能使用。
+2. 进入仓库 `Settings > Pages`。
+3. 在 `Build and deployment` 里把 `Source` 改成 `Deploy from a branch`。
+4. 分支选择 `master`，目录选择 `/ (root)`，然后点 `Save`。
+5. 等 1 到 3 分钟，GitHub 会自动发布页面。
+6. 把生成的网址发给别人，对方手机点开就能使用。
 
 部署成功后的地址通常类似：
 
@@ -44,20 +45,8 @@ https://你的用户名.github.io/你的仓库名/
 ## 我已经为你准备好的部署文件
 
 - 页面主文件：`index.html`
-- 自动部署工作流：`.github/workflows/deploy-pages.yml`
+- 关闭 Jekyll 处理：`.nojekyll`
 
 ## 你下一步只差什么
 
-当前目录已经是本地 Git 仓库，但还没有接上你的 GitHub 远程仓库，所以现在还不能直接生成公开链接。
-
-如果你把下面两项中的任意一项给我，我就可以继续帮你完成：
-
-1. 你的 GitHub 仓库地址
-2. 你的 GitHub 用户名和准备使用的仓库名
-
-到那一步，我可以继续帮你：
-
-- 连接远程仓库
-- 提交当前代码
-- 推送到 GitHub
-- 告诉你最终可分享的手机访问链接
+当前项目已经适合直接放到 GitHub Pages 上。如果你已经把代码推送到仓库，只要按上面的 `Pages` 设置选择 `master / root`，就能生成公开链接。
