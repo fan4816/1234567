@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法律风险初筛工具</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 250, 242, 0.9);
+      --text: #1e1a16;
+      --muted: #675b52;
+      --line: rgba(30, 26, 22, 0.1);
+      --brand: #a54518;
+      --brand-deep: #6f2708;
+      --brand-soft: #f7d4be;
+      --accent: #0f766e;
+      --warn: #b45309;
+      --danger: #b42318;
+      --shadow: 0 24px 64px rgba(80, 45, 15, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(247, 212, 190, 0.95), transparent 36%),
+        radial-gradient(circle at 85% 12%, rgba(15, 118, 110, 0.16), transparent 24%),
+        linear-gradient(180deg, #f7f0e6 0%, #f2ebe1 46%, #efe8df 100%);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.26) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.26) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 75%);
+      opacity: 0.2;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      padding: 34px 0 18px;
+    }
+
+    .hero-wrap {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      right: -48px;
+      top: -52px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(165, 69, 24, 0.16), transparent 68%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--brand-deep);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      font-size: clamp(34px, 4.8vw, 60px);
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-main p {
+      margin: 0;
+      max-width: 700px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .hero-actions,
+    .hero-points,
+    .stats,
+    .chip-row,
+    .result-badges,
+    .cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .share-panel {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(30, 26, 22, 0.08);
+    }
+
+    .share-panel h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .share-panel p {
+      margin: 0 0 14px;
+      font-size: 14px;
+    }
+
+    .share-status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    .hero-actions {
+      margin-top: 24px;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      font: inherit;
+      border-radius: 999px;
+      padding: 14px 22px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+      color: #fff;
+      box-shadow: 0 18px 34px rgba(111, 39, 8, 0.25);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--text);
+      border: 1px solid rgba(30, 26, 22, 0.08);
+    }
+
+    .hero-points {
+      margin-top: 26px;
+    }
+
+    .point {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px solid rgba(30, 26, 22, 0.06);
+    }
+
+    .hero-side {
+      padding: 28px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-side h2,
+    .section-head h2,
+    .result-top h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .hero-side p,
+    .section-head p,
+    .note,
+    .helper,
+    .result-copy,
+    .cta-panel p,
+    footer p {
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .stats {
+      margin-top: 2px;
+    }
+
+    .stat {
+      flex: 1 1 120px;
+      background: rgba(255, 255, 255, 0.76);
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid rgba(30, 26, 22, 0.05);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: var(--brand-deep);
+    }
+
+    main {
+      padding: 6px 0 30px;
+    }
+
+    .section-head {
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .form-card,
+    .result-card,
+    .cta-panel {
+      padding: 26px;
+    }
+
+    form {
+      display: grid;
+      gap: 22px;
+    }
+
+    .form-section {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(30, 26, 22, 0.06);
+    }
+
+    .form-section h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .form-section > p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field,
+    .field-full {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(30, 26, 22, 0.12);
+      padding: 13px 14px;
+      font: inherit;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.92);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(165, 69, 24, 0.7);
+      box-shadow: 0 0 0 4px rgba(165, 69, 24, 0.12);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .chip-row {
+      margin-top: 2px;
+    }
+
+    .chip {
+      position: relative;
+      flex: 1 1 220px;
+    }
+
+    .chip input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .chip span {
+      display: block;
+      height: 100%;
+      padding: 14px 14px 14px 46px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(30, 26, 22, 0.08);
+      line-height: 1.65;
+      color: var(--muted);
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+
+    .chip span::before {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 18px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(165, 69, 24, 0.28);
+      background: #fff;
+    }
+
+    .chip input:checked + span {
+      border-color: rgba(165, 69, 24, 0.52);
+      background: linear-gradient(180deg, rgba(255, 247, 243, 1), rgba(255, 241, 231, 0.95));
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    .chip input:checked + span::before {
+      background: radial-gradient(circle, var(--brand) 0 45%, white 46% 100%);
+      border-color: rgba(165, 69, 24, 0.7);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .actions .note {
+      margin: 0;
+      font-size: 13px;
+      flex: 1 1 240px;
+    }
+
+    .result-card {
+      position: sticky;
+      top: 20px;
+      display: grid;
+      gap: 18px;
+      background: linear-gradient(180deg, rgba(255, 250, 244, 0.96), rgba(255, 247, 240, 0.9));
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      width: fit-content;
+    }
+
+    .pill-low {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+    }
+
+    .pill-mid {
+      background: rgba(180, 83, 9, 0.12);
+      color: var(--warn);
+    }
+
+    .pill-high {
+      background: rgba(180, 35, 24, 0.12);
+      color: var(--danger);
+    }
+
+    .score-ring {
+      width: 168px;
+      height: 168px;
+      margin: 6px auto 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at center, rgba(255, 250, 244, 1) 0 53%, transparent 54%),
+        conic-gradient(var(--brand) 0deg, var(--brand-soft) 0deg 360deg);
+      box-shadow: inset 0 0 0 1px rgba(30, 26, 22, 0.05);
+    }
+
+    .score-ring strong {
+      display: block;
+      font-size: 40px;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .score-ring span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .result-top p,
+    .result-block p,
+    .result-block li {
+      line-height: 1.75;
+    }
+
+    .result-block {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .result-block h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .result-block ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .result-copy {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px dashed rgba(30, 26, 22, 0.12);
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
+    .cta {
+      margin: 12px 0 40px;
+    }
+
+    .cta-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      background:
+        radial-gradient(circle at top right, rgba(247, 212, 190, 0.9), transparent 30%),
+        linear-gradient(120deg, rgba(111, 39, 8, 0.98), rgba(165, 69, 24, 0.96));
+      color: #fff8f3;
+    }
+
+    .cta-panel p {
+      margin: 10px 0 0;
+      color: rgba(255, 248, 243, 0.82);
+    }
+
+    .cta-panel .btn-secondary {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    footer {
+      padding: 0 0 32px;
+    }
+
+    footer .card {
+      padding: 22px 24px;
+    }
+
+    footer p {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .fade-up:nth-child(2) {
+      animation-delay: 0.06s;
+    }
+
+    .fade-up:nth-child(3) {
+      animation-delay: 0.12s;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1040px) {
+      .hero-wrap,
+      .tool-grid,
+      .cta-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(var(--max), calc(100% - 18px));
+      }
+
+      .hero-main,
+      .hero-side,
+      .form-card,
+      .result-card,
+      .cta-panel {
+        padding: 20px;
+      }
+
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-wrap">
+        <section class="hero-main card fade-up">
+          <div class="eyebrow">法律风险自测 · 常见纠纷初步判断</div>
+          <h1>先看自己有没有法律风险<br>再决定下一步怎么处理</h1>
+          <p>
+            这个页面面向普通群众使用，帮助你快速判断当前纠纷是否已经进入需要尽快处理的阶段。
+            你填写基础情况后，系统会结合常见法律场景给出初步风险等级、可能的风险点、建议准备的材料和下一步处理方向。
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#screening-form">开始初筛</a>
+            <a class="btn btn-secondary" href="#usage-guide">查看说明</a>
+          </div>
+          <div class="hero-points">
+            <div class="point">3分钟完成基础判断</div>
+            <div class="point">按场景显示更贴合的问题项</div>
+            <div class="point">结果可复制保存，方便后续咨询</div>
+          </div>
+        </section>
+
+        <aside class="hero-side card fade-up" id="usage-guide">
+          <h2>你将获得什么</h2>
+          <p>结果不会代替正式法律意见，但可以帮你先看三个重点：现在急不急、风险大不大、接下来应该先准备什么。</p>
+          <div class="stats">
+            <div class="stat">
+              <strong>6类</strong>
+              <span>覆盖最常见法律纠纷入口</span>
+            </div>
+            <div class="stat">
+              <strong>3级</strong>
+              <span>输出低/中/高风险提示</span>
+            </div>
+            <div class="stat">
+              <strong>即时</strong>
+              <span>填写后当场生成结果</span>
+            </div>
+          </div>
+          <p class="note">建议尽量如实填写时间、金额、证据和对方状态，这样结果会更接近你当前的真实情况。</p>
+        </aside>
+      </div>
+    </header>
+
+    <main>
+      <div class="section-head fade-up">
+        <div>
+          <h2>法律风险初筛表</h2>
+          <p>当前结果仅在你的浏览器中生成，不会自动提交。你可以先自测，再决定是否进一步咨询律师。</p>
+        </div>
+      </div>
+
+      <div class="tool-grid">
+        <section class="form-card card fade-up">
+          <form id="screening-form">
+            <div class="form-section">
+              <h3>1. 基础信息</h3>
+              <p>这些信息主要用于帮助判断案件紧急程度和后续沟通方式，不直接构成法律意见。</p>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="name">姓名或称呼</label>
+                  <input id="name" name="name" type="text" placeholder="例如：张女士">
+                </div>
+                <div class="field">
+                  <label for="ageGroup">年龄段</label>
+                  <select id="ageGroup" name="ageGroup">
+                    <option value="">请选择</option>
+                    <option value="18-24">18-24岁</option>
+                    <option value="25-34">25-34岁</option>
+                    <option value="35-44">35-44岁</option>
+                    <option value="45-59">45-59岁</option>
+                    <option value="60+">60岁以上</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="city">所在城市</label>
+                  <input id="city" name="city" type="text" placeholder="例如：上海、成都、青岛">
+                </div>
+                <div class="field">
+                  <label for="contact">联系方式</label>
+                  <input id="contact" name="contact" type="text" placeholder="手机号 / 微信号（选填）">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>2. 风险场景</h3>
+              <p>先选择最接近你当前问题的一类场景，后面的关键触发点会随场景自动切换。</p>
+              <div class="field-grid">
+                <div class="field-full">
+                  <label for="category">主要法律问题类型</label>
+                  <select id="category" name="category" required>
+                    <option value="labor">劳动纠纷：拖欠工资、未签合同、违法辞退、社保争议</option>
+                    <option value="family">婚姻家事：离婚、家暴、子女抚养、财产分割</option>
+                    <option value="debt">借贷欠款：个人借款、货款拖欠、对方失联不还款</option>
+                    <option value="traffic">交通事故：责任划分、伤残赔偿、保险拒赔</option>
+                    <option value="criminal">刑事/治安：传唤、拘留、涉案资金、账户冻结</option>
+                    <option value="contract">商业合同：付款违约、履约争议、盖章授权风险</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="urgency">事件距离现在多久</label>
+                  <select id="urgency" name="urgency">
+                    <option value="immediate">3天内</option>
+                    <option value="recent">1个月内</option>
+                    <option value="quarter">3个月内</option>
+                    <option value="long">3个月以上</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="amount">争议金额或损失估算</label>
+                  <select id="amount" name="amount">
+                    <option value="small">1万元以下</option>
+                    <option value="medium">1万-10万元</option>
+                    <option value="large">10万-50万元</option>
+                    <option value="huge">50万元以上</option>
+                    <option value="unknown">暂时无法判断</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="evidence">目前证据完整度</label>
+                  <select id="evidence" name="evidence">
+                    <option value="strong">较完整：合同/聊天/转账/录音都有</option>
+                    <option value="basic">一般：只有部分材料</option>
+                    <option value="weak">较弱：关键证据缺失</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="counterparty">对方当前状态</label>
+                  <select id="counterparty" name="counterparty">
+                    <option value="normal">仍可联系、仍在沟通</option>
+                    <option value="stalling">拖延、推诿、不正面处理</option>
+                    <option value="missing">失联、转移、拒绝配合</option>
+                    <option value="pressure">存在威胁、冻结、控制、持续施压</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>3. 关键触发点</h3>
+              <p id="flags-helper">请勾选与你当前情况更接近的选项，可多选。不同法律场景会显示不同内容。</p>
+              <div class="chip-row" id="dynamic-flags"></div>
+            </div>
+
+            <div class="form-section">
+              <h3>4. 经过描述</h3>
+              <p>尽量按时间顺序描述经过，例如什么时候发生、涉及多少钱、对方怎么说、你手上有哪些证据。</p>
+              <div class="field-grid">
+                <div class="field-full">
+                  <label for="summary">请简要描述事情经过</label>
+                  <textarea id="summary" name="summary" placeholder="例如：2026年3月入职，至今未签合同，4月和5月工资未发，微信多次催要无果，公司让先离职再处理……"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary">生成风险初筛结果</button>
+              <button type="button" class="btn btn-secondary" id="reset-btn">清空重填</button>
+              <p class="note">提示：当前结果仅作风险提示与初步判断，不构成正式法律意见或律师出具的结论。</p>
+            </div>
+          </form>
+        </section>
+
+        <aside class="result-card card fade-up" id="result-panel">
+          <div class="result-top">
+            <div class="pill pill-mid" id="risk-pill">等待生成</div>
+            <div class="score-ring" id="score-ring">
+              <div>
+                <strong id="score-value">52</strong>
+                <span>初始演示分</span>
+              </div>
+            </div>
+            <h2 id="result-title">先判断当前情况是否已经到了要尽快处理的阶段</h2>
+            <p id="result-summary">填写表单后，这里会展示风险等级、触发点提示、建议动作和可复制摘要，帮助你先理清当前问题的大致方向。</p>
+          </div>
+
+          <div class="result-badges" id="result-tags">
+            <div class="point">默认展示：中风险</div>
+            <div class="point">可先自测再咨询</div>
+          </div>
+
+          <div class="result-block">
+            <h3>本次触发的风险点</h3>
+            <ul id="risk-list">
+              <li>不同法律场景的风险高低，通常与时间、证据、金额和对方状态密切相关。</li>
+              <li>如果存在失联、冻结、家暴、伤情、被传唤等情形，往往意味着不能继续拖延。</li>
+            </ul>
+          </div>
+
+          <div class="result-block">
+            <h3>建议下一步</h3>
+            <ul id="action-list">
+              <li>先固定聊天记录、转账记录、合同、录音、病历、责任认定书等核心证据。</li>
+              <li>尽量把事情经过按时间线整理清楚，方便你自己判断，也方便后续咨询律师。</li>
+            </ul>
+          </div>
+
+          <div class="result-block">
+            <h3>可复制初筛摘要</h3>
+            <p class="result-copy" id="result-copy">姓名：未填写
+场景：未选择
+风险等级：中风险（演示）
+建议：可先进一步整理材料，再决定是否咨询律师。</p>
+            <div class="actions">
+              <button type="button" class="btn btn-secondary" id="copy-btn">复制摘要</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <section class="cta fade-up">
+        <div class="cta-panel card">
+          <div>
+            <h2>如果你准备进一步咨询</h2>
+            <p>建议先把初筛结果、时间线、关键证据和你最想解决的问题整理在一起，再联系律师，会更节省沟通时间。</p>
+            <div class="share-panel">
+              <h3>把这个网页分享给别人</h3>
+              <p>部署后，别人用手机打开链接就能直接看到这个网页。支持系统分享，也支持一键复制链接。</p>
+              <div class="cta-actions">
+                <button type="button" class="btn btn-secondary" id="share-page-btn">分享页面</button>
+                <button type="button" class="btn btn-secondary" id="copy-page-link-btn">复制页面链接</button>
+              </div>
+              <div class="share-status" id="share-status">提示：当前本地预览时还没有公开网址，部署到 GitHub Pages 后即可分享。</div>
+            </div>
+          </div>
+          <div class="cta-actions">
+            <a class="btn btn-secondary" href="tel:400-000-0000">电话咨询</a>
+            <a class="btn btn-secondary" href="mailto:intake@example.com">发送材料</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="card">
+        <p>免责声明：本页面结果仅基于用户自行填写的信息进行规则化初筛，用于识别常见法律风险与处理优先级，不构成正式法律意见、诉讼策略、仲裁建议或律师承诺。实际案件应由持证律师结合完整材料进一步研判。</p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById("screening-form");
+    const categorySelect = document.getElementById("category");
+    const dynamicFlags = document.getElementById("dynamic-flags");
+    const flagsHelper = document.getElementById("flags-helper");
+    const resetBtn = document.getElementById("reset-btn");
+    const copyBtn = document.getElementById("copy-btn");
+    const sharePageBtn = document.getElementById("share-page-btn");
+    const copyPageLinkBtn = document.getElementById("copy-page-link-btn");
+    const shareStatus = document.getElementById("share-status");
+    const scoreValue = document.getElementById("score-value");
+    const scoreRing = document.getElementById("score-ring");
+    const riskPill = document.getElementById("risk-pill");
+    const resultTitle = document.getElementById("result-title");
+    const resultSummary = document.getElementById("result-summary");
+    const riskList = document.getElementById("risk-list");
+    const actionList = document.getElementById("action-list");
+    const resultCopy = document.getElementById("result-copy");
+    const resultTags = document.getElementById("result-tags");
+
+    const categoryLabels = {
+      labor: "劳动纠纷",
+      family: "婚姻家事",
+      debt: "借贷欠款",
+      traffic: "交通事故",
+      criminal: "刑事/治安",
+      contract: "商业合同"
+    };
+
+    const categoryNotes = {
+      labor: "劳动纠纷通常要重点留意仲裁时效、解除通知、工资流水和工作关系证明。",
+      family: "婚姻家事纠纷往往要尽快固定家暴、抚养、财产流向等关键材料。",
+      debt: "借贷欠款最怕证据链断裂、债务人失联和财产转移。",
+      traffic: "交通事故需要同时看责任认定、伤情发展和保险理赔节点。",
+      criminal: "刑事或治安风险一旦涉及传唤、拘留、冻结，通常不宜拖延处理。",
+      contract: "商业合同纠纷重点在于合同效力、履行证据和对方主体资信。"
+    };
+
+    const categoryActions = {
+      labor: [
+        "尽快保存劳动合同、录用通知、考勤、工资流水、社保记录、工作群聊天截图。",
+        "如果已经被辞退或停职，先固定解除通知、谈话录音和岗位安排变化。",
+        "涉及拖欠工资或补偿时，建议尽快核实仲裁请求项和时效风险。"
+      ],
+      family: [
+        "优先固定报警记录、就诊病历、伤情照片、聊天威胁内容和财产流水。",
+        "涉及子女抚养时，尽量整理实际照顾情况、孩子生活支出和教育安排。",
+        "如怀疑对方转移财产，尽快梳理房产、车辆、股权、银行卡和支付记录。"
+      ],
+      debt: [
+        "先整理借条、合同、转账记录、催款聊天、通话录音和对方身份信息。",
+        "如果对方失联或明显拖延，建议优先判断保全、起诉或执行路径。",
+        "涉及较大金额时，尽快确认债务发生经过和还款承诺是否留痕。"
+      ],
+      traffic: [
+        "保留责任认定书、病历、诊断证明、发票、误工材料和保险沟通记录。",
+        "若伤情仍在发展，尽量避免过早一次性结清赔偿事项。",
+        "责任争议较大时，可先评估赔偿项目和后续谈判空间。"
+      ],
+      criminal: [
+        "不要随意删改聊天、转账或设备中的相关信息，先固定已有证据。",
+        "如已被传唤、拘留或账户冻结，建议尽快联系律师了解程序节点。",
+        "涉及多人、多笔资金或平台交易时，要尽快把时间线梳理清楚。"
+      ],
+      contract: [
+        "先统一整理合同版本、报价、付款、交付、验收、发票和对账信息。",
+        "如果盖章或授权不清晰，要尽快核对签约主体和实际履约主体。",
+        "对方长期拖延履约或付款时，建议优先评估发函、谈判和诉讼顺序。"
+      ]
+    };
+
+    const categoryFlagOptions = {
+      labor: [
+        { id: "wage_arrears", label: "存在拖欠工资、社保、公积金、补偿金等劳动给付问题", weight: 11, risk: "涉及劳动给付拖欠，通常意味着维权节奏不能再继续拖延。" },
+        { id: "no_contract", label: "未签书面劳动合同，或合同、入职材料、工资约定不完整", weight: 12, risk: "关键劳动关系材料缺失，后续举证难度会明显提高。" },
+        { id: "termination", label: "已经被辞退、清退、停职，或对方单方面解除劳动关系", weight: 14, risk: "对方已单方解除关系，说明纠纷已进入实质对抗阶段。" },
+        { id: "overtime", label: "长期加班、调岗、降薪、变相逼离职等情况较明显", weight: 9, risk: "工作安排异常变化往往意味着争议将进一步升级。" },
+        { id: "social_security", label: "存在未缴社保、少缴社保或社保基数明显异常", weight: 8, risk: "社保问题往往会影响补偿计算和维权路径判断。" },
+        { id: "payroll_evidence", label: "工资发放、考勤、工作内容主要靠微信或口头沟通留痕", weight: 7, risk: "证据分散在聊天和转账记录中，越晚整理越容易遗漏关键信息。" }
+      ],
+      family: [
+        { id: "domestic_violence", label: "存在家暴、持续威胁、限制人身自由、跟踪骚扰等情形", weight: 24, risk: "存在家暴或持续威胁时，人身安全和证据保全都需要优先考虑。" },
+        { id: "child_property", label: "涉及子女抚养、探望安排、教育费用或生活费用争议", weight: 10, risk: "涉及子女抚养时，后续争议往往持续更久，也更需要稳定证据。" },
+        { id: "asset_transfer", label: "怀疑对方隐匿、转移夫妻共同财产或债务情况不清", weight: 14, risk: "财产流向不清会直接影响离婚谈判和分割结果。" },
+        { id: "separation", label: "已分居较长时间，或双方对离婚意愿差异较大", weight: 7, risk: "长期分居和意愿冲突会影响后续协商和诉讼节奏。" },
+        { id: "house_dispute", label: "涉及房产、车辆、存款、股权等价值较高财产分配", weight: 12, risk: "高价值财产争议通常意味着取证和博弈成本更高。" },
+        { id: "communication_pressure", label: "对方频繁施压、辱骂、拉黑或通过家属进行干扰", weight: 9, risk: "持续施压会加重沟通风险，也可能影响你固定证据的时机。" }
+      ],
+      debt: [
+        { id: "overdue_payment", label: "对方长期拖欠借款、货款、服务费、工程款或租金", weight: 12, risk: "长期逾期不履行通常意味着回款难度提升，执行风险也会随之上升。" },
+        { id: "no_contract", label: "没有完整借条、欠条、合同或还款约定不清晰", weight: 12, risk: "核心法律关系文件缺失，会直接提高后续举证和起诉难度。" },
+        { id: "missing", label: "对方失联、拉黑、搬离、换号，或明显规避沟通", weight: 18, risk: "对方失联通常意味着资产转移或逃避责任的可能性增加。" },
+        { id: "partial_payment", label: "对方只零星还款，反复承诺但一直拖延", weight: 8, risk: "反复拖延会压缩你处理的主动空间，也容易造成证据碎片化。" },
+        { id: "guarantee", label: "涉及担保人、共同借款人或实际收款人与借款人不一致", weight: 10, risk: "主体关系复杂时，责任划分和追偿路径会更难判断。" },
+        { id: "platform_trace", label: "借款或交易主要通过微信、短视频、电商平台等完成", weight: 7, risk: "平台型交易证据分散，越晚固定越容易丢失关键信息。" }
+      ],
+      traffic: [
+        { id: "injury", label: "有人受伤、住院、伤残评估、误工损失或后续治疗争议", weight: 16, risk: "一旦出现伤情、住院或伤残评估，赔偿范围和时点会更加复杂。" },
+        { id: "insurance_refusal", label: "保险公司拒赔、少赔，或理赔条件争议较大", weight: 10, risk: "保险拒赔或少赔通常需要较强证据和责任分析支持。" },
+        { id: "responsibility_dispute", label: "责任划分不明确，或你对责任认定结果有较大异议", weight: 12, risk: "责任认定争议会直接影响赔偿金额和后续谈判空间。" },
+        { id: "vehicle_loss", label: "车辆维修、贬值、停运或替代交通费用争议较大", weight: 7, risk: "财产损失项目较多时，容易出现赔偿范围理解不一致。" },
+        { id: "medical_followup", label: "后续治疗尚未结束，恢复情况和费用仍不确定", weight: 8, risk: "伤情仍在变化时，过早一次性处理可能带来后续风险。" },
+        { id: "police_material", label: "事故认定书、病历、票据、保险沟通记录暂不完整", weight: 9, risk: "关键材料不完整会影响赔偿测算，也会拖慢后续处理进度。" }
+      ],
+      criminal: [
+        { id: "police_notice", label: "收到警方传唤、询问通知、行政处罚、拘留或案件协查", weight: 22, risk: "警方介入意味着程序性风险提高，口头沟通不一定足够。" },
+        { id: "account_frozen", label: "银行卡、微信、支付宝、公司账户被冻结或限制交易", weight: 24, risk: "账户被冻结往往意味着权利受限或案件已进入更强控制状态。" },
+        { id: "fund_flow", label: "涉及多笔资金往来、代收代付、异常流水或平台结算", weight: 14, risk: "资金链复杂时，事实梳理和责任判断都会更困难。" },
+        { id: "device_taken", label: "手机、电脑、账本、合同等材料已被调取或你暂时无法接触", weight: 10, risk: "关键材料被控制时，越早梳理已有信息越重要。" },
+        { id: "multiple_people", label: "涉及多人共同参与，且每个人的角色和分工不清晰", weight: 11, risk: "多人参与会让事实认定和责任区分变得更复杂。" },
+        { id: "urgent_contact", label: "家属、同事或朋友紧急联系你，说明事情正在快速变化", weight: 8, risk: "局面快速变化时，拖延往往会让应对空间进一步变小。" }
+      ],
+      contract: [
+        { id: "overdue_payment", label: "对方长期拖延付款、结算、对账或验收", weight: 12, risk: "长期拖延付款通常意味着回款和执行风险正在上升。" },
+        { id: "seal_authority", label: "合同盖章、签字、授权代表身份存在疑点", weight: 11, risk: "盖章授权瑕疵会直接影响合同效力和后续索赔路径。" },
+        { id: "delivery_dispute", label: "交付标准、质量要求、履约节点或验收结果争议较大", weight: 10, risk: "履约标准不清晰时，违约责任往往更难界定。" },
+        { id: "invoice_settlement", label: "发票、结算单、对账单或付款凭证缺失较多", weight: 8, risk: "结算材料不足会影响你后续主张金额的准确性。" },
+        { id: "platform_trace", label: "合同履行主要通过微信、邮件、平台消息、线上文档推进", weight: 7, risk: "线上履约证据分散，越晚统一整理越不利。" },
+        { id: "counterparty_change", label: "签约主体、收款主体、履约主体前后不一致", weight: 13, risk: "主体不一致时，很容易引发责任归属和付款对象争议。" }
+      ]
+    };
+
+    const urgencyWeights = {
+      immediate: 18,
+      recent: 10,
+      quarter: 5,
+      long: 0
+    };
+
+    const amountWeights = {
+      small: 4,
+      medium: 10,
+      large: 18,
+      huge: 26,
+      unknown: 8
+    };
+
+    const evidenceWeights = {
+      strong: -6,
+      basic: 5,
+      weak: 14
+    };
+
+    const counterpartyWeights = {
+      normal: 2,
+      stalling: 10,
+      missing: 18,
+      pressure: 24
+    };
+
+    const categoryBase = {
+      labor: 24,
+      family: 26,
+      debt: 22,
+      traffic: 24,
+      criminal: 34,
+      contract: 20
+    };
+
+    function clamp(num, min, max) {
+      return Math.min(max, Math.max(min, num));
+    }
+
+    function toListMarkup(target, items) {
+      target.innerHTML = "";
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        target.appendChild(li);
+      });
+    }
+
+    function createTags(tags) {
+      resultTags.innerHTML = "";
+      tags.forEach((tag) => {
+        const node = document.createElement("div");
+        node.className = "point";
+        node.textContent = tag;
+        resultTags.appendChild(node);
+      });
+    }
+
+    function getFlagMetaMap() {
+      return Object.values(categoryFlagOptions).flat().reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+    }
+
+    const flagMetaMap = getFlagMetaMap();
+
+    function getRiskLevel(score) {
+      if (score >= 75) {
+        return {
+          label: "高风险",
+          pillClass: "pill pill-high",
+          title: "当前情况存在较高法律风险，建议尽快处理",
+          summary: "从你填写的信息看，纠纷已具备明显升级迹象，继续拖延可能影响时效、赔偿、回款或程序应对。",
+          actionTag: "建议尽快咨询"
+        };
+      }
+      if (score >= 48) {
+        return {
+          label: "中风险",
+          pillClass: "pill pill-mid",
+          title: "已经出现较明确风险信号，建议尽快补充材料并继续判断",
+          summary: "当前情况通常还处在可处理窗口，但证据不全、对方拖延或程序节点临近时，风险会继续上升。",
+          actionTag: "建议继续跟进"
+        };
+      }
+      return {
+        label: "低风险",
+        pillClass: "pill pill-low",
+        title: "暂未发现特别强的升级信号，但仍建议保留材料",
+        summary: "从现有信息看，问题可能仍处于前期协商阶段，不过法律关系、时效和证据仍需要继续观察。",
+        actionTag: "可先保留证据"
+      };
+    }
+
+    function renderFlags(category, preserveSelection = true) {
+      const options = categoryFlagOptions[category] || [];
+      const selected = preserveSelection
+        ? new Set(Array.from(form.querySelectorAll('input[name="flags"]:checked')).map((item) => item.value))
+        : new Set();
+
+      dynamicFlags.innerHTML = "";
+      options.forEach((option) => {
+        const label = document.createElement("label");
+        label.className = "chip";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.name = "flags";
+        input.value = option.id;
+        if (selected.has(option.id)) {
+          input.checked = true;
+        }
+
+        const span = document.createElement("span");
+        span.textContent = option.label;
+
+        label.appendChild(input);
+        label.appendChild(span);
+        dynamicFlags.appendChild(label);
+      });
+
+      flagsHelper.textContent = `当前场景：${categoryLabels[category]}。请勾选与你现在情况更接近的选项，可多选。`;
+    }
+
+    function buildReport(data) {
+      const category = data.get("category");
+      const urgency = data.get("urgency");
+      const amount = data.get("amount");
+      const evidence = data.get("evidence");
+      const counterparty = data.get("counterparty");
+      const summary = (data.get("summary") || "").trim();
+      const selectedFlags = data.getAll("flags");
+      const currentFlags = categoryFlagOptions[category] || [];
+      const currentFlagIds = new Set(currentFlags.map((item) => item.id));
+
+      let score = categoryBase[category] || 20;
+      score += urgencyWeights[urgency] || 0;
+      score += amountWeights[amount] || 0;
+      score += evidenceWeights[evidence] || 0;
+      score += counterpartyWeights[counterparty] || 0;
+
+      const selectedCurrentFlags = selectedFlags.filter((flag) => currentFlagIds.has(flag));
+      selectedCurrentFlags.forEach((flag) => {
+        score += flagMetaMap[flag]?.weight || 0;
+      });
+
+      score += selectedCurrentFlags.length * 4;
+      if (summary.length > 80) {
+        score += 4;
+      }
+      if (data.get("contact")) {
+        score += 2;
+      }
+
+      score = clamp(score, 18, 98);
+
+      const level = getRiskLevel(score);
+      const categoryLabel = categoryLabels[category] || "未识别场景";
+      const caller = data.get("name") || "该咨询人";
+
+      const risks = [];
+      risks.push(categoryNotes[category] || "当前场景建议优先确认关键事实与证据链。");
+
+      if (selectedCurrentFlags.length) {
+        selectedCurrentFlags.slice(0, 4).forEach((flag) => {
+          risks.push(flagMetaMap[flag]?.risk || "该项情况提示你需要尽快核实事实并固定材料。");
+        });
+      } else {
+        risks.push("暂未勾选典型触发点，建议继续补充关键信息后再判断。");
+      }
+
+      if (evidence === "weak") {
+        risks.push("现有证据偏弱，后续维权或抗辩成本可能显著提高。");
+      }
+      if (counterparty === "missing" || counterparty === "pressure") {
+        risks.push("对方配合度较差或存在施压情形，通常意味着处理窗口在缩短。");
+      }
+
+      const actions = [...(categoryActions[category] || [])];
+      if (urgency === "immediate") {
+        actions.unshift("事情发生在最近 3 天内，建议优先安排处理，避免错过关键程序节点。");
+      }
+      if (score >= 75) {
+        actions.push("如涉及人身安全、羁押、冻结、财产转移或大额损失，建议不要只靠自行沟通。");
+      }
+      if (evidence === "strong") {
+        actions.push("现有材料较完整，适合尽快让专业人士判断下一步走协商、发函、仲裁还是起诉。");
+      }
+
+      const readableFlags = selectedCurrentFlags.map((flag) => flagMetaMap[flag]?.label || flag);
+      const urgencyLabels = {
+        immediate: "3天内",
+        recent: "1个月内",
+        quarter: "3个月内",
+        long: "3个月以上"
+      };
+      const amountLabels = {
+        small: "1万元以下",
+        medium: "1万-10万元",
+        large: "10万-50万元",
+        huge: "50万元以上",
+        unknown: "暂时无法判断"
+      };
+      const evidenceLabels = {
+        strong: "较完整",
+        basic: "一般",
+        weak: "较弱"
+      };
+      const counterpartyLabels = {
+        normal: "仍可联系、仍在沟通",
+        stalling: "拖延、推诿、不正面处理",
+        missing: "失联、转移、拒绝配合",
+        pressure: "存在威胁、冻结、控制、持续施压"
+      };
+
+      const tagList = [
+        categoryLabel,
+        level.label,
+        level.actionTag,
+        readableFlags.length ? `触发点 ${readableFlags.length} 项` : "待补充触发点"
+      ];
+
+      const summaryLines = [
+        `姓名：${data.get("name") || "未填写"}`,
+        `城市：${data.get("city") || "未填写"}`,
+        `联系方式：${data.get("contact") || "未填写"}`,
+        `场景：${categoryLabel}`,
+        `风险等级：${level.label}（${score} 分）`,
+        `事件时距：${urgencyLabels[urgency] || "未填写"}`,
+        `争议金额：${amountLabels[amount] || "未填写"}`,
+        `证据情况：${evidenceLabels[evidence] || "未填写"}`,
+        `对方状态：${counterpartyLabels[counterparty] || "未填写"}`,
+        `关键触发点：${readableFlags.length ? readableFlags.join("；") : "未勾选"}`,
+        `系统提示：${caller}${level.label === "高风险" ? "当前情况建议尽快安排专业法律帮助介入。" : level.label === "中风险" ? "建议尽快补证并继续判断处理路径。" : "可先继续整理材料并观察风险变化。"}`,
+        `经过摘要：${summary || "未填写"}`
+      ];
+
+      return {
+        score,
+        level,
+        risks: risks.slice(0, 5),
+        actions: actions.slice(0, 5),
+        tags: tagList,
+        copy: summaryLines.join("\n")
+      };
+    }
+
+    function renderReport(report) {
+      scoreValue.textContent = report.score;
+      scoreRing.style.background = `radial-gradient(circle at center, rgba(255, 250, 244, 1) 0 53%, transparent 54%), conic-gradient(var(--brand) ${report.score * 3.6}deg, var(--brand-soft) ${report.score * 3.6}deg 360deg)`;
+      riskPill.className = report.level.pillClass;
+      riskPill.textContent = report.level.label;
+      resultTitle.textContent = report.level.title;
+      resultSummary.textContent = report.level.summary;
+      toListMarkup(riskList, report.risks);
+      toListMarkup(actionList, report.actions);
+      resultCopy.textContent = report.copy;
+      createTags(report.tags);
+    }
+
+    categorySelect.addEventListener("change", () => {
+      renderFlags(categorySelect.value, false);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const report = buildReport(new FormData(form));
+      renderReport(report);
+      document.getElementById("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    resetBtn.addEventListener("click", () => {
+      form.reset();
+      renderFlags(categorySelect.value, false);
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(resultCopy.textContent);
+        copyBtn.textContent = "已复制";
+        setTimeout(() => {
+          copyBtn.textContent = "复制摘要";
+        }, 1600);
+      } catch (error) {
+        copyBtn.textContent = "复制失败";
+        setTimeout(() => {
+          copyBtn.textContent = "复制摘要";
+        }, 1600);
+      }
+    });
+
+    function getSharableUrl() {
+      if (window.location.protocol === "file:") {
+        return "";
+      }
+      return window.location.href;
+    }
+
+    function setShareStatus(message) {
+      shareStatus.textContent = message;
+    }
+
+    sharePageBtn.addEventListener("click", async () => {
+      const url = getSharableUrl();
+      if (!url) {
+        setShareStatus("当前是本地文件预览，先部署到 GitHub Pages 后再分享给别人。");
+        return;
+      }
+
+      const payload = {
+        title: document.title,
+        text: "法律风险初筛工具",
+        url
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          setShareStatus("已调起系统分享面板，可以直接发给微信好友或保存到手机。");
+          return;
+        }
+
+        await navigator.clipboard.writeText(url);
+        setShareStatus("当前设备不支持系统分享，已自动复制页面链接。");
+      } catch (error) {
+        setShareStatus("分享未完成，你也可以直接使用“复制页面链接”。");
+      }
+    });
+
+    copyPageLinkBtn.addEventListener("click", async () => {
+      const url = getSharableUrl();
+      if (!url) {
+        setShareStatus("当前是本地文件预览，先部署到 GitHub Pages 后才能复制公开链接。");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareStatus("页面链接已复制，可以直接发给别人。");
+      } catch (error) {
+        setShareStatus("复制失败，请手动复制浏览器地址栏中的链接。");
+      }
+    });
+
+    renderFlags(categorySelect.value, false);
+  </script>
+</body>
+</html>
