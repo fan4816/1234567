@@ -836,10 +836,6 @@
               <div class="share-status" id="share-status">提示：当前本地预览时还没有公开网址，部署到 GitHub Pages 后即可分享。</div>
             </div>
           </div>
-          <div class="cta-actions">
-            <a class="btn btn-secondary" href="tel:400-000-0000">电话咨询</a>
-            <a class="btn btn-secondary" href="mailto:intake@example.com">发送材料</a>
-          </div>
         </div>
       </section>
     </main>
@@ -1033,15 +1029,6 @@
       });
     }
 
-    function getFlagMetaMap() {
-      return Object.values(categoryFlagOptions).flat().reduce((acc, item) => {
-        acc[item.id] = item;
-        return acc;
-      }, {});
-    }
-
-    const flagMetaMap = getFlagMetaMap();
-
     function getRiskLevel(score) {
       if (score >= 75) {
         return {
@@ -1117,9 +1104,12 @@
       score += evidenceWeights[evidence] || 0;
       score += counterpartyWeights[counterparty] || 0;
 
+      const currentFlagMap = {};
+      currentFlags.forEach((item) => { currentFlagMap[item.id] = item; });
+
       const selectedCurrentFlags = selectedFlags.filter((flag) => currentFlagIds.has(flag));
       selectedCurrentFlags.forEach((flag) => {
-        score += flagMetaMap[flag]?.weight || 0;
+        score += currentFlagMap[flag]?.weight || 0;
       });
 
       score += selectedCurrentFlags.length * 4;
@@ -1141,7 +1131,7 @@
 
       if (selectedCurrentFlags.length) {
         selectedCurrentFlags.slice(0, 4).forEach((flag) => {
-          risks.push(flagMetaMap[flag]?.risk || "该项情况提示你需要尽快核实事实并固定材料。");
+          risks.push(currentFlagMap[flag]?.risk || "该项情况提示你需要尽快核实事实并固定材料。");
         });
       } else {
         risks.push("暂未勾选典型触发点，建议继续补充关键信息后再判断。");
@@ -1165,7 +1155,7 @@
         actions.push("现有材料较完整，适合尽快让专业人士判断下一步走协商、发函、仲裁还是起诉。");
       }
 
-      const readableFlags = selectedCurrentFlags.map((flag) => flagMetaMap[flag]?.label || flag);
+      const readableFlags = selectedCurrentFlags.map((flag) => currentFlagMap[flag]?.label || flag);
       const urgencyLabels = {
         immediate: "3天内",
         recent: "1个月内",
