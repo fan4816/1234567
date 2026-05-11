@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>推箱子</title>
+  <style>
+    :root {
+      --bg: #f3ede2;
+      --bg-accent: #e5d5bc;
+      --panel: rgba(255, 250, 242, 0.88);
+      --ink: #2d261e;
+      --muted: #6c6255;
+      --line: rgba(78, 58, 35, 0.12);
+      --wall: #5f4a39;
+      --floor: #efe2cc;
+      --goal: #c96d41;
+      --goal-ring: rgba(201, 109, 65, 0.2);
+      --box: #b8884a;
+      --box-edge: #8f6632;
+      --box-done: #4c8c67;
+      --player: #1e6a78;
+      --player-glow: rgba(30, 106, 120, 0.18);
+      --button: #1f6d5b;
+      --button-hover: #195848;
+      --button-text: #fffaf2;
+      --shadow: 0 24px 60px rgba(59, 38, 17, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --cell-size: min(8vw, 56px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.78), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(201, 109, 65, 0.16), transparent 30%),
+        linear-gradient(145deg, var(--bg), var(--bg-accent));
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(320px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 28px;
+      position: sticky;
+      top: 24px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(201, 109, 65, 0.12);
+      color: #8b4c2a;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(34px, 5vw, 52px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--line);
+    }
+
+    .stat-card span {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-card strong {
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 16px;
+      background: var(--button);
+      color: var(--button-text);
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+      box-shadow: 0 12px 24px rgba(31, 109, 91, 0.16);
+    }
+
+    button:hover {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: rgba(95, 74, 57, 0.08);
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(95, 74, 57, 0.14);
+    }
+
+    .level-picker {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid var(--line);
+      margin-bottom: 22px;
+    }
+
+    .level-picker label {
+      font-size: 14px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .level-picker select {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      padding: 11px 12px;
+      color: var(--ink);
+    }
+
+    .legend,
+    .tips {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid var(--line);
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .legend-chip {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      flex: none;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .tips ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .board-wrap {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .stage-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stage-head h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      letter-spacing: -0.04em;
+    }
+
+    .stage-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 44ch;
+    }
+
+    .badge {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(30, 106, 120, 0.12);
+      color: var(--player);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .board-frame {
+      padding: 18px;
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 229, 204, 0.85)),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      overflow: auto;
+    }
+
+    .board {
+      display: grid;
+      gap: 4px;
+      width: max-content;
+      margin: 0 auto;
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 14px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: var(--floor);
+    }
+
+    .cell.wall {
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent),
+        linear-gradient(145deg, #705643, var(--wall));
+      box-shadow: inset 0 -8px 14px rgba(0, 0, 0, 0.14);
+    }
+
+    .cell.goal::after {
+      content: "";
+      width: 48%;
+      height: 48%;
+      border-radius: 50%;
+      background: var(--goal-ring);
+      border: 3px solid var(--goal);
+      box-sizing: border-box;
+    }
+
+    .box,
+    .player {
+      width: 70%;
+      height: 70%;
+      position: absolute;
+      border-radius: 16px;
+      z-index: 2;
+    }
+
+    .box {
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.3), transparent 52%),
+        linear-gradient(160deg, #d3a163, var(--box));
+      border: 3px solid var(--box-edge);
+      box-shadow: 0 10px 16px rgba(143, 102, 50, 0.18);
+    }
+
+    .box.done {
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.28), transparent 54%),
+        linear-gradient(160deg, #64b18a, var(--box-done));
+      border-color: #347252;
+      box-shadow: 0 10px 16px rgba(76, 140, 103, 0.18);
+    }
+
+    .player {
+      width: 64%;
+      height: 64%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.68), transparent 24%),
+        linear-gradient(145deg, #3290a0, var(--player));
+      box-shadow:
+        0 0 0 10px var(--player-glow),
+        0 10px 18px rgba(30, 106, 120, 0.22);
+    }
+
+    .message {
+      min-height: 56px;
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .message.win {
+      color: #27563d;
+      background: rgba(100, 177, 138, 0.16);
+      border-color: rgba(76, 140, 103, 0.2);
+    }
+
+    .control-pad {
+      display: grid;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .control-pad button {
+      width: 74px;
+      height: 58px;
+      padding: 0;
+      font-size: 24px;
+      border-radius: 18px;
+    }
+
+    .footer-note {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .sidebar,
+      .board-wrap {
+        padding: 18px;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-head {
+        flex-direction: column;
+      }
+
+      .badge {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="panel sidebar">
+      <div class="eyebrow">经典仓库谜题</div>
+      <h1>推箱子</h1>
+      <p class="intro">
+        把所有木箱推进目标点。你可以前进、撤销、重开，也可以直接切换关卡。
+        支持键盘方向键、`WASD`，以及手机上的触控方向按钮。
+      </p>
+
+      <section class="stats" aria-label="游戏统计">
+        <div class="stat-card">
+          <span>当前关卡</span>
+          <strong id="levelLabel">1 / 1</strong>
+        </div>
+        <div class="stat-card">
+          <span>完成进度</span>
+          <strong id="progressLabel">0 / 0</strong>
+        </div>
+        <div class="stat-card">
+          <span>步数</span>
+          <strong id="movesLabel">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>推箱次数</span>
+          <strong id="pushesLabel">0</strong>
+        </div>
+      </section>
+
+      <section class="actions" aria-label="游戏操作">
+        <button id="resetButton" type="button">重开本关</button>
+        <button id="undoButton" type="button">撤销一步</button>
+        <button id="prevButton" type="button" class="secondary">上一关</button>
+        <button id="nextButton" type="button" class="secondary">下一关</button>
+      </section>
+
+      <section class="level-picker">
+        <label for="levelSelect">切换关卡</label>
+        <select id="levelSelect" aria-label="选择关卡"></select>
+      </section>
+
+      <section class="legend" aria-label="图例说明">
+        <div class="legend-row"><span class="legend-chip" style="background: var(--wall);"></span>墙体</div>
+        <div class="legend-row"><span class="legend-chip" style="background: var(--floor);"></span>地面</div>
+        <div class="legend-row"><span class="legend-chip" style="background: var(--goal);"></span>目标点</div>
+        <div class="legend-row"><span class="legend-chip" style="background: var(--box);"></span>木箱</div>
+        <div class="legend-row"><span class="legend-chip" style="background: var(--player);"></span>玩家</div>
+      </section>
+
+      <section class="tips" aria-label="玩法提示">
+        <ul>
+          <li>墙体无法穿越，箱子也不能一次推两个。</li>
+          <li>把箱子推进角落前，先确认那不是死路。</li>
+          <li>完成一关后会自动解锁下一关的提示文本。</li>
+        </ul>
+      </section>
+    </aside>
+
+    <section class="panel board-wrap">
+      <header class="stage-head">
+        <div>
+          <h2 id="stageTitle">第 1 关</h2>
+          <p id="stageDescription">先把局面展开，再把箱子送进目标点。</p>
+        </div>
+        <div class="badge" id="stageBadge">键盘方向键 / WASD 可移动</div>
+      </header>
+
+      <div class="board-frame">
+        <div id="board" class="board" aria-label="推箱子棋盘"></div>
+      </div>
+
+      <div id="message" class="message" aria-live="polite">
+        让每个箱子都停在目标点上，就算过关。
+      </div>
+
+      <div class="control-pad" aria-label="触屏方向键">
+        <div class="control-row">
+          <button type="button" data-direction="up" aria-label="向上">↑</button>
+        </div>
+        <div class="control-row">
+          <button type="button" data-direction="left" aria-label="向左">←</button>
+          <button type="button" data-direction="down" aria-label="向下">↓</button>
+          <button type="button" data-direction="right" aria-label="向右">→</button>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        双击即可开始玩，也可以把这个文件夹直接部署到 GitHub Pages。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TILE = {
+      WALL: "#",
+      FLOOR: " ",
+      GOAL: ".",
+      BOX: "$",
+      BOX_ON_GOAL: "*",
+      PLAYER: "@",
+      PLAYER_ON_GOAL: "+"
+    };
+
+    const LEVELS = [
+      {
+        title: "第 1 关",
+        hint: "先把右侧的箱子送进去，再腾出回旋空间。",
+        map: [
+          "#######",
+          "#     #",
+          "#.$ @ #",
+          "#  .  #",
+          "#######"
+        ]
+      },
+      {
+        title: "第 2 关",
+        hint: "把两个箱子按节奏拆开处理，不要堵住中路。",
+        map: [
+          "########",
+          "#  .   #",
+          "#  $   #",
+          "# $$@  #",
+          "#  .   #",
+          "########"
+        ]
+      },
+      {
+        title: "第 3 关",
+        hint: "先处理靠上的箱子，后面的路线才会变宽。",
+        map: [
+          "#########",
+          "#   .   #",
+          "#   $   #",
+          "# $$@$. #",
+          "#   .   #",
+          "#########"
+        ]
+      },
+      {
+        title: "第 4 关",
+        hint: "先别急着往下推，绕到左侧会更舒服。",
+        map: [
+          "#########",
+          "#   .   #",
+          "# #$#   #",
+          "# .$ @  #",
+          "#   #   #",
+          "#   .   #",
+          "#########"
+        ]
+      }
+    ];
+
+    const boardElement = document.getElementById("board");
+    const stageTitle = document.getElementById("stageTitle");
+    const stageDescription = document.getElementById("stageDescription");
+    const stageBadge = document.getElementById("stageBadge");
+    const levelLabel = document.getElementById("levelLabel");
+    const progressLabel = document.getElementById("progressLabel");
+    const movesLabel = document.getElementById("movesLabel");
+    const pushesLabel = document.getElementById("pushesLabel");
+    const message = document.getElementById("message");
+    const levelSelect = document.getElementById("levelSelect");
+    const resetButton = document.getElementById("resetButton");
+    const undoButton = document.getElementById("undoButton");
+    const prevButton = document.getElementById("prevButton");
+    const nextButton = document.getElementById("nextButton");
+
+    let currentLevelIndex = 0;
+    let state = null;
+    let history = [];
+
+    function cloneGrid(grid) {
+      return grid.map((row) => [...row]);
+    }
+
+    function parseLevel(levelIndex) {
+      const layout = LEVELS[levelIndex].map;
+      return {
+        grid: layout.map((row) => row.padEnd(Math.max(...layout.map((line) => line.length)), " ").split("")),
+        moves: 0,
+        pushes: 0,
+        complete: false
+      };
+    }
+
+    function startLevel(levelIndex) {
+      currentLevelIndex = levelIndex;
+      state = parseLevel(levelIndex);
+      history = [];
+      render();
+    }
+
+    function getPlayerPosition(grid) {
+      for (let y = 0; y < grid.length; y += 1) {
+        for (let x = 0; x < grid[y].length; x += 1) {
+          if (grid[y][x] === TILE.PLAYER || grid[y][x] === TILE.PLAYER_ON_GOAL) {
+            return { x, y };
+          }
+        }
+      }
+      return null;
+    }
+
+    function isGoal(tile) {
+      return tile === TILE.GOAL || tile === TILE.BOX_ON_GOAL || tile === TILE.PLAYER_ON_GOAL;
+    }
+
+    function isBox(tile) {
+      return tile === TILE.BOX || tile === TILE.BOX_ON_GOAL;
+    }
+
+    function isWalkable(tile) {
+      return tile === TILE.FLOOR || tile === TILE.GOAL;
+    }
+
+    function setTileForLeaving(tile) {
+      return tile === TILE.PLAYER_ON_GOAL ? TILE.GOAL : TILE.FLOOR;
+    }
+
+    function setTileForPlayer(tile) {
+      return tile === TILE.GOAL ? TILE.PLAYER_ON_GOAL : TILE.PLAYER;
+    }
+
+    function setTileForBox(tile) {
+      return tile === TILE.GOAL ? TILE.BOX_ON_GOAL : TILE.BOX;
+    }
+
+    function getGoalsComplete(grid) {
+      let total = 0;
+      let done = 0;
+
+      grid.forEach((row) => {
+        row.forEach((tile) => {
+          if (tile === TILE.GOAL || tile === TILE.PLAYER_ON_GOAL || tile === TILE.BOX_ON_GOAL) {
+            total += 1;
+          }
+          if (tile === TILE.BOX_ON_GOAL) {
+            done += 1;
+          }
+        });
+      });
+
+      return { done, total };
+    }
+
+    function queueHistory() {
+      history.push({
+        grid: cloneGrid(state.grid),
+        moves: state.moves,
+        pushes: state.pushes,
+        complete: state.complete
+      });
+    }
+
+    function move(direction) {
+      if (state.complete) {
+        return;
+      }
+
+      const player = getPlayerPosition(state.grid);
+      if (!player) {
+        return;
+      }
+
+      const vectors = {
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 }
+      };
+
+      const vector = vectors[direction];
+      if (!vector) {
+        return;
+      }
+
+      const nextX = player.x + vector.x;
+      const nextY = player.y + vector.y;
+      const nextTile = state.grid[nextY]?.[nextX];
+
+      if (!nextTile || nextTile === TILE.WALL) {
+        return;
+      }
+
+      queueHistory();
+
+      if (isBox(nextTile)) {
+        const boxNextX = nextX + vector.x;
+        const boxNextY = nextY + vector.y;
+        const boxNextTile = state.grid[boxNextY]?.[boxNextX];
+
+        if (!boxNextTile || !isWalkable(boxNextTile)) {
+          history.pop();
+          return;
+        }
+
+        state.grid[boxNextY][boxNextX] = setTileForBox(boxNextTile);
+        state.grid[nextY][nextX] = setTileForPlayer(nextTile === TILE.BOX_ON_GOAL ? TILE.GOAL : TILE.FLOOR);
+        state.grid[player.y][player.x] = setTileForLeaving(state.grid[player.y][player.x]);
+        state.moves += 1;
+        state.pushes += 1;
+      } else if (isWalkable(nextTile)) {
+        state.grid[nextY][nextX] = setTileForPlayer(nextTile);
+        state.grid[player.y][player.x] = setTileForLeaving(state.grid[player.y][player.x]);
+        state.moves += 1;
+      } else {
+        history.pop();
+        return;
+      }
+
+      checkWin();
+      render();
+    }
+
+    function checkWin() {
+      const { done, total } = getGoalsComplete(state.grid);
+      state.complete = total > 0 && done === total;
+    }
+
+    function undo() {
+      const previous = history.pop();
+      if (!previous) {
+        return;
+      }
+      state = {
+        grid: cloneGrid(previous.grid),
+        moves: previous.moves,
+        pushes: previous.pushes,
+        complete: previous.complete
+      };
+      render();
+    }
+
+    function renderBoard() {
+      boardElement.innerHTML = "";
+      boardElement.style.gridTemplateColumns = `repeat(${state.grid[0].length}, var(--cell-size))`;
+
+      state.grid.forEach((row) => {
+        row.forEach((tile) => {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+
+          if (tile === TILE.WALL) {
+            cell.classList.add("wall");
+          }
+
+          if (isGoal(tile)) {
+            cell.classList.add("goal");
+          }
+
+          if (isBox(tile)) {
+            const box = document.createElement("div");
+            box.className = "box";
+            if (tile === TILE.BOX_ON_GOAL) {
+              box.classList.add("done");
+            }
+            cell.appendChild(box);
+          }
+
+          if (tile === TILE.PLAYER || tile === TILE.PLAYER_ON_GOAL) {
+            const player = document.createElement("div");
+            player.className = "player";
+            cell.appendChild(player);
+          }
+
+          boardElement.appendChild(cell);
+        });
+      });
+    }
+
+    function renderMeta() {
+      const level = LEVELS[currentLevelIndex];
+      const { done, total } = getGoalsComplete(state.grid);
+
+      stageTitle.textContent = level.title;
+      stageDescription.textContent = level.hint;
+      stageBadge.textContent = state.complete
+        ? "本关完成，继续挑战下一关"
+        : "键盘方向键 / WASD 可移动";
+      levelLabel.textContent = `${currentLevelIndex + 1} / ${LEVELS.length}`;
+      progressLabel.textContent = `${done} / ${total}`;
+      movesLabel.textContent = state.moves;
+      pushesLabel.textContent = state.pushes;
+
+      levelSelect.value = String(currentLevelIndex);
+      prevButton.disabled = currentLevelIndex === 0;
+      nextButton.disabled = currentLevelIndex === LEVELS.length - 1;
+      undoButton.disabled = history.length === 0;
+    }
+
+    function renderMessage() {
+      if (state.complete) {
+        message.className = "message win";
+        if (currentLevelIndex < LEVELS.length - 1) {
+          message.textContent = `过关了，真漂亮。你用了 ${state.moves} 步、推了 ${state.pushes} 次箱子。可以直接进入下一关。`;
+        } else {
+          message.textContent = `全部关卡完成。你已经把这组推箱子清空了，适合直接部署到 GitHub Pages 给朋友试玩。`;
+        }
+      } else {
+        message.className = "message";
+        message.textContent = `目标进度 ${getGoalsComplete(state.grid).done}/${getGoalsComplete(state.grid).total}。先观察通路，再动箱子。`;
+      }
+    }
+
+    function render() {
+      renderBoard();
+      renderMeta();
+      renderMessage();
+    }
+
+    function populateLevels() {
+      LEVELS.forEach((level, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = `${level.title} - ${level.hint}`;
+        levelSelect.appendChild(option);
+      });
+    }
+
+    function handleKeydown(event) {
+      const keyMap = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        w: "up",
+        W: "up",
+        s: "down",
+        S: "down",
+        a: "left",
+        A: "left",
+        d: "right",
+        D: "right"
+      };
+
+      if (event.key === "r" || event.key === "R") {
+        startLevel(currentLevelIndex);
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undo();
+        return;
+      }
+
+      const direction = keyMap[event.key];
+      if (!direction) {
+        return;
+      }
+
+      event.preventDefault();
+      move(direction);
+    }
+
+    resetButton.addEventListener("click", () => startLevel(currentLevelIndex));
+    undoButton.addEventListener("click", undo);
+    prevButton.addEventListener("click", () => startLevel(Math.max(0, currentLevelIndex - 1)));
+    nextButton.addEventListener("click", () => startLevel(Math.min(LEVELS.length - 1, currentLevelIndex + 1)));
+    levelSelect.addEventListener("change", (event) => startLevel(Number(event.target.value)));
+
+    document.querySelectorAll("[data-direction]").forEach((button) => {
+      button.addEventListener("click", () => move(button.dataset.direction));
+    });
+
+    document.addEventListener("keydown", handleKeydown);
+
+    populateLevels();
+    startLevel(0);
+  </script>
+</body>
+</html>
